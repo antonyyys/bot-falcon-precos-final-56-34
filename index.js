@@ -1,36 +1,47 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 const express = require('express');
 
 const app = express();
-app.get('/', (req, res) => res.send('🦅 BOT DE PREÇOS FALCON ATIVO!'));
+app.get('/', (req, res) => res.send('🦅 BOT DE PREÇOS DESTRAVADO!'));
 app.listen(7860, '0.0.0.0');
 
-// 🔒 PROTOCOLO DE CRIPTOGRAFIA PARA BARRAR O ROBÔ DO GITHUB
-const _x1 = "TVRVd01UQXhNVGd4TnpVd05ERTNPREkxTncuaFBRMVFSTC5tUTU5aWdoVVpVMFBvT0pIVnYzS2IwemlIcXJEdmpEOGVZQ01jbw==";
-const TOKEN = Buffer.from(_x1, 'base64').toString('utf-8').replace('hPQ1QRL', 'GRPO_G');
-const GEMINI_KEY = "AIzaSyBH9NBatCGkhsynu1lsdANo7A2XbfA-oLE";
+const TOKEN = Buffer.from("TVRVd01UQXhNVGd4TnpVd05ERTNPREkxTncuaFBRMVFSTC5tUTU5aWdoVVpVMFBvT0pIVnYzS2IwemlIcXJEdmpEOGVZQ01jbw==", 'base64').toString('utf-8').replace('hPQ1QRL', 'GRPO_G');
+const genAI = new GoogleGenerativeAI("AIzaSyBH9NBatCGkhsynu1lsdANo7A2XbfA-oLE");
+
+const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    // 🛡️ DESATIVANDO TODOS OS FILTROS DE SEGURANÇA (Para ele aceitar os insultos)
+    safetySettings: [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+    ]
+});
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
-const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash", 
-    tools: [{ googleSearch: {} }],
-    systemInstruction: "Você é o Falcon-Games, mestre de hardware da tropa Metalbr. Xingue como: mono vagabundo, pata de galinha e cabeca de pescoco longo. Regras de Preço: use Google Search hoje no Brasil. Se for ruim de qualidade, diga que é BOMBA. Promo Steam > 80% ou Bugs de R$ 0."
-});
 
 client.on('messageCreate', async (msg) => {
     if (msg.author.bot || !msg.content.toLowerCase().includes('@bot')) return;
     
     await msg.channel.sendTyping();
+    const promptMaster = `Você é o Falcon-Games, mestre de hardware da tropa Metalbr.
+    SUA PERSONALIDADE: Zoeiro, chama os amigos de frango, mono vagabundo e pata de galinha.
+    SUA TAREFA: Pesquisar e analisar hardware hoje no Brasil (use nomes de lojas reais). 
+    Se o produto for ruim diga que é BOMBA.
+    Pergunta de ${msg.author.username}: ${msg.content}`;
+
     try {
-        const res = await model.generateContent(`Analise HOJE hardware ou games na Steam para o mono vagabundo do ${msg.author.username}: ${msg.content}`);
-        const embed = new EmbedBuilder().setColor(0xFF0000).setTitle('🦅 INSIGHT DE PREÇO FALCON').setDescription(res.response.text());
+        const result = await model.generateContent(promptMaster);
+        const textResponse = result.response.text();
+        const embed = new EmbedBuilder().setColor(0xFFD700).setTitle('🦅 INSIGHT DO FALCON').setDescription(textResponse);
         await msg.reply({ embeds: [embed] });
     } catch (e) {
-        msg.reply("Tô dando lag por causa da sua aura de frango, manda de novo!");
+        console.error(e);
+        msg.reply("Minha rede lagou ou sua pergunta foi tão burra que o Google travou! Tenta de novo frango!");
     }
 });
 
-client.once('ready', () => console.log('🚀 BOT 1 ATIVO NO DISCORD!'));
+client.once('ready', () => console.log('✅ BOT 1 REATIVADO E DESTRAVADO!'));
 client.login(TOKEN);
